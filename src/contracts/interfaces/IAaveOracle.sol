@@ -12,17 +12,23 @@ import {IPoolAddressesProvider} from './IPoolAddressesProvider.sol';
 interface IAaveOracle is IPriceOracleGetter {
   /**
    * @dev Emitted after the base currency is set
-   * @param baseCurrency The base currency of used for price quotes
+   * @param baseCurrency The base currency used for price quotes
    * @param baseCurrencyUnit The unit of the base currency
    */
   event BaseCurrencySet(address indexed baseCurrency, uint256 baseCurrencyUnit);
 
   /**
-   * @dev Emitted after the price source of an asset is updated
+   * @dev Emitted after the Witnet currency ID for an asset is updated
    * @param asset The address of the asset
-   * @param source The price source of the asset
+   * @param currencyId The Witnet currency ID for the asset
    */
-  event AssetSourceUpdated(address indexed asset, address indexed source);
+  event AssetCurrencyIdUpdated(address indexed asset, bytes4 indexed currencyId);
+
+  /**
+   * @dev Emitted after the Witnet price router is updated
+   * @param witnetProxy The address of the Witnet price router
+   */
+  event WitnetProxyUpdated(address indexed witnetProxy);
 
   /**
    * @dev Emitted after the address of fallback oracle is updated
