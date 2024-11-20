@@ -55,7 +55,6 @@ contract AaveOracle is IAaveOracle {
   ) {
     ADDRESSES_PROVIDER = provider;
     _setFallbackOracle(fallbackOracle);
-    _setAssetsSources(assets, sources);
     BASE_CURRENCY = baseCurrency;
     BASE_CURRENCY_UNIT = baseCurrencyUnit;
     emit BaseCurrencySet(baseCurrency, baseCurrencyUnit);
@@ -70,19 +69,19 @@ contract AaveOracle is IAaveOracle {
 
   /**
    * @notice Sets or updates the Witnet price router address
-   * @param witnetProxy The address of the Witnet price router contract
+   * @param witnetProxyAddress The address of the Witnet price router contract
    */
-  function setWitnetProxy(address witnetProxy) external onlyAssetListingOrPoolAdmins {
-    _setWitnetProxy(witnetProxy);
+  function setWitnetProxy(address witnetProxyAddress) external onlyAssetListingOrPoolAdmins {
+    _setWitnetProxy(witnetProxyAddress);
   }
 
   /**
    * @notice Internal function to set the Witnet price router
-   * @param witnetProxy The address of the Witnet price router contract
+   * @param witnetProxyAddress The address of the Witnet price router contract
    */
-  function _setWitnetProxy(address witnetProxy) internal {
-    witnetProxy = WitnetProxyInterface(witnetProxy);
-    emit WitnetProxyUpdated(witnetProxy);
+  function _setWitnetProxy(address witnetProxyAddress) internal {
+    witnetProxy = WitnetProxyInterface(witnetProxyAddress);
+    emit WitnetProxyUpdated(witnetProxyAddress);
   }
 
   /**
@@ -163,20 +162,16 @@ contract AaveOracle is IAaveOracle {
     }
 
     // Batch fetch prices from Witnet
-    (
-      int256[] memory witnetPrices,
-      uint256[] memory timestamps,
-      uint256[] memory statuses
-    ) = witnetProxy.lastPrices(currencyIds);
+    WitnetPrice[] memory witnetPrices = witnetProxy.latestPrices(currencyIds);
 
     // Process results
     for (uint256 i = 0; i < assets.length; i++) {
       if (assets[i] != BASE_CURRENCY) {
-        if (currencyIds[i] == bytes4(0) || witnetPrices[i] <= 0) {
+        if (currencyIds[i] == bytes4(0) || witnetPrices[i].value <= 0) {
           // Use fallback if no Witnet price or invalid price
           prices[i] = _fallbackOracle.getAssetPrice(assets[i]);
         } else {
-          prices[i] = uint256(witnetPrices[i]);
+          prices[i] = witnetPrices[i].value;
         }
       }
     }

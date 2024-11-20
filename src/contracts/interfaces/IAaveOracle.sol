@@ -26,9 +26,9 @@ interface IAaveOracle is IPriceOracleGetter {
 
   /**
    * @dev Emitted after the Witnet price router is updated
-   * @param witnetProxy The address of the Witnet price router
+   * @param witnetProxyAddress The address of the Witnet price router
    */
-  event WitnetProxyUpdated(address indexed witnetProxy);
+  event WitnetProxyUpdated(address indexed witnetProxyAddress);
 
   /**
    * @dev Emitted after the address of fallback oracle is updated
@@ -41,13 +41,6 @@ interface IAaveOracle is IPriceOracleGetter {
    * @return The address of the PoolAddressesProvider contract
    */
   function ADDRESSES_PROVIDER() external view returns (IPoolAddressesProvider);
-
-  /**
-   * @notice Sets or replaces price sources of assets
-   * @param assets The addresses of the assets
-   * @param sources The addresses of the price sources
-   */
-  function setAssetSources(address[] calldata assets, address[] calldata sources) external;
 
   /**
    * @notice Sets the fallback oracle

@@ -5,6 +5,7 @@ import {IAaveV3ConfigEngine as IEngine, IAaveOracle} from '../IAaveV3ConfigEngin
 import {IEACAggregatorProxy} from '../../../helpers/interfaces/IEACAggregatorProxy.sol';
 
 library PriceFeedEngine {
+  // TODO WARNING this doesn't do anything anymore, I hope we don't ever use it...
   function executePriceFeedsUpdate(
     IEngine.EngineConstants calldata engineConstants,
     IEngine.PriceFeedUpdate[] memory updates
@@ -28,6 +29,7 @@ library PriceFeedEngine {
       sources[i] = updates[i].priceFeed;
     }
 
-    oracle.setAssetSources(assets, sources);
+    // we don't use chainlink anymore
+    // oracle.setAssetSources(assets, sources);
   }
 }

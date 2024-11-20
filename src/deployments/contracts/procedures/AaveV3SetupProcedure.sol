@@ -10,8 +10,9 @@ import {PoolAddressesProvider} from '../../../contracts/protocol/configuration/P
 import {PoolAddressesProviderRegistry} from '../../../contracts/protocol/configuration/PoolAddressesProviderRegistry.sol';
 import {IEmissionManager} from '../../../contracts/rewards/interfaces/IEmissionManager.sol';
 import {IRewardsController} from '../../../contracts/rewards/interfaces/IRewardsController.sol';
+import {AaveV3OracleSetupProcedure} from './AaveV3OracleSetupProcedure.sol';
 
-contract AaveV3SetupProcedure {
+contract AaveV3SetupProcedure is AaveV3OracleSetupProcedure {
   error MarketOwnerMustBeSet();
   error RewardsControllerImplementationMustBeSet();
 
@@ -25,6 +26,9 @@ contract AaveV3SetupProcedure {
     address rewardsControllerProxy;
     address rewardsControllerImplementation;
     address priceOracleSentinel;
+    address witnetProxy;
+    address[] assets;
+    bytes4[] currencyIds;
   }
 
   function _initialDeployment(
@@ -68,7 +72,10 @@ contract AaveV3SetupProcedure {
         aaveOracle,
         config.incentivesProxy,
         rewardsControllerImplementation,
-        priceOracleSentinel
+        priceOracleSentinel,
+        config.witnetProxy,
+        config.assets,
+        config.currencyIds
       )
     );
 
@@ -76,8 +83,8 @@ contract AaveV3SetupProcedure {
       roles,
       initialReport.poolAddressesProvider,
       report.poolConfiguratorProxy,
-      config.flashLoanPremiumTotal,
-      config.flashLoanPremiumToProtocol
+      config,
+      aaveOracle
     );
 
     _transferMarketOwnership(roles, initialReport);
@@ -149,9 +156,11 @@ contract AaveV3SetupProcedure {
     Roles memory roles,
     address poolAddressesProvider,
     address poolConfiguratorProxy,
-    uint128 flashLoanPremiumTotal,
-    uint128 flashLoanPremiumToProtocol
+    MarketConfig memory config,
+    address oracle
   ) internal returns (address) {
+
+
     IPoolAddressesProvider provider = IPoolAddressesProvider(poolAddressesProvider);
 
     // Temporal admin set to the contract
@@ -168,9 +177,13 @@ contract AaveV3SetupProcedure {
     _configureFlashloanParams(
       manager,
       poolConfiguratorProxy,
-      flashLoanPremiumTotal,
-      flashLoanPremiumToProtocol
+      config.flashLoanPremiumTotal,
+      config.flashLoanPremiumToProtocol
     );
+
+    manager.addAssetListingAdmin(address(this));
+
+    _setupOracle(oracle, config.witnetProxy, config.assets, config.currencyIds);
 
     manager.addPoolAdmin(roles.poolAdmin);
 

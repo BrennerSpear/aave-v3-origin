@@ -27,6 +27,11 @@ contract DefaultMarketInput is MarketInput {
     config.flashLoanPremiumTotal = 0.0005e4;
     config.flashLoanPremiumToProtocol = 0.0004e4;
 
+    // Default Oracle config
+    config.witnetProxy = address(0);
+    config.assets = new address[](0);
+    config.currencyIds = new bytes4[](0);
+
     return (roles, config, flags, deployedContracts);
   }
 }
