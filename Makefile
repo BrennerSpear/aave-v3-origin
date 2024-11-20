@@ -42,12 +42,43 @@ git-diff :
 
 # Deploy
 deploy-libs-one	:;
-	forge script scripts/misc/LibraryPreCompileOne.sol --rpc-url ${chain} --ledger --mnemonic-indexes ${MNEMONIC_INDEX} --sender ${LEDGER_SENDER} --verify --slow --broadcast
+	forge script scripts/misc/LibraryPreCompileOne.sol --rpc-url ${chain}  --private-keys ${PRIVATE_KEY} --verify --slow --broadcast --legacy --etherscan-api-key ${ETHERSCAN_API_KEY_WORLD}
 deploy-libs-two	:;
-	forge script scripts/misc/LibraryPreCompileTwo.sol --rpc-url ${chain} --ledger --mnemonic-indexes ${MNEMONIC_INDEX} --sender ${LEDGER_SENDER} --verify --slow --broadcast
+	forge script scripts/misc/LibraryPreCompileTwo.sol --rpc-url ${chain}  --private-keys ${PRIVATE_KEY} --verify --slow --broadcast --legacy --etherscan-api-key ${ETHERSCAN_API_KEY_WORLD}
 
 deploy-libs :
 	make deploy-libs-one chain=${chain}
-	npx catapulta-verify -b broadcast/LibraryPreCompileOne.sol/${chainId}/run-latest.json
 	make deploy-libs-two chain=${chain}
-	npx catapulta-verify -b broadcast/LibraryPreCompileTwo.sol/${chainId}/run-latest.json
+# npx catapulta-verify -b broadcast/LibraryPreCompileOne.sol/${chainId}/run-latest.json
+# npx catapulta-verify -b broadcast/LibraryPreCompileTwo.sol/${chainId}/run-latest.json
+
+
+# Deploy
+deploy-world-libs-one	:;
+	forge script scripts/misc/LibraryPreCompileOne.sol --rpc-url $(if $(isMainnet),${RPC_WORLD},${RPC_WORLD_SEPOLIA})  --private-keys ${PRIVATE_KEY} --verify --slow --broadcast --legacy --etherscan-api-key ${ETHERSCAN_API_KEY_WORLD}
+deploy-world-libs-two	:;
+	forge script scripts/misc/LibraryPreCompileTwo.sol --rpc-url $(if $(isMainnet),${RPC_WORLD},${RPC_WORLD_SEPOLIA})  --private-keys ${PRIVATE_KEY} --verify --slow --broadcast --legacy --etherscan-api-key ${ETHERSCAN_API_KEY_WORLD}
+
+deploy-world-libs :
+	make deploy-libs-one isMainnet=${isMainnet}
+	make deploy-libs-two isMainnet=${isMainnet}
+
+deploy-world :
+	forge script scripts/DeployWorldSepolia.sol:Deploy \
+    --rpc-url $(if $(isMainnet),${RPC_WORLD},${RPC_WORLD_SEPOLIA}) \
+    --private-keys ${PRIVATE_KEY} \
+	--etherscan-api-key ${ETHERSCAN_API_KEY_WORLD} \
+    --broadcast \
+    --verify \
+	--legacy \
+    -vvvv 
+
+verify-all-world:
+	forge script scripts/DeployWorldSepolia.sol:Deploy \
+    --rpc-url $(if $(isMainnet),${RPC_WORLD},${RPC_WORLD_SEPOLIA}) \
+    --private-keys ${PRIVATE_KEY} \
+	--etherscan-api-key ${ETHERSCAN_API_KEY_WORLD} \
+	--resume \
+    --verify \
+	--legacy \
+    -vvvv 

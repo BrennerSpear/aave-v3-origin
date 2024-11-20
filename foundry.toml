@@ -41,6 +41,8 @@ bnb = "${RPC_BNB}"
 gnosis = "${RPC_GNOSIS}"
 base = "${RPC_BASE}"
 metis = "${RPC_METIS}"
+world = "${RPC_WORLD}"
+world_sepolia = "${RPC_WORLD_SEPOLIA}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY_MAINNET}", chainId = 1 }
@@ -59,4 +61,8 @@ bnb = { key = "${ETHERSCAN_API_KEY_BNB}", chainId = 56, url = 'https://api.bscsc
 base = { key = "${ETHERSCAN_API_KEY_BASE}", chain = 8453 }
 gnosis = { key = "${ETHERSCAN_API_KEY_GNOSIS}", chainId = 100 }
 metis = { key = "", chainId = 1088, url = 'https://api.routescan.io/v2/network/mainnet/evm/1088/etherscan/api' }
+base_sepolia = { key = "${ETHERSCAN_API_KEY_BASE_SEPOLIA}", url = "https://api-sepolia.basescan.org/api" }
+world = { key = "$ETHERSCAN_API_KEY_WORLD", chainId = 480 }
+world_sepolia = { key = "$ETHERSCAN_API_KEY_WORLD_SEPOLIA", chainId = 4801 }
+
 # See more config options https://github.com/gakonst/foundry/tree/master/config

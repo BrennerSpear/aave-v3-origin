@@ -8,6 +8,7 @@ contract DefaultMarketInput is MarketInput {
   )
     internal
     pure
+    virtual
     override
     returns (
       Roles memory roles,

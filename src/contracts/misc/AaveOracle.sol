@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {AggregatorInterface} from '../dependencies/chainlink/AggregatorInterface.sol';
+import {AggregatorInterface} from '../dependencies/witnet/AggregatorInterface.sol';
 import {Errors} from '../protocol/libraries/helpers/Errors.sol';
 import {IACLManager} from '../interfaces/IACLManager.sol';
 import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
