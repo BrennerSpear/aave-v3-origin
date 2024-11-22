@@ -19,7 +19,7 @@ contract AaveV3L2PoolProcedure is AaveV3PoolConfigProcedure, IErrors {
 
     return report;
   }
-
+  
   function _deployL2PoolImpl(address poolAddressesProvider) internal returns (address) {
     address l2Pool = address(new L2PoolInstance(IPoolAddressesProvider(poolAddressesProvider)));
 
