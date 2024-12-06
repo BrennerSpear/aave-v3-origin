@@ -39,13 +39,13 @@ contract WorldMarketInput is DefaultMarketInput {
 
     // World specific Oracle config
     config.witnetProxy = 0x1111AbA2164AcdC6D291b08DfB374280035E1111;
+    config.oracleDecimals = 6;
     config.assets = assets;
     config.currencyIds = currencyIds;
 
     return (roles, config, flags, deployedContracts);
   }
 }
-
 
 // world sepolia: https://sepolia.worldscan.org/tokentxns
 // eth/usd: 0x3d15f701, 0x4200000000000000000000000000000000000006

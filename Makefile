@@ -55,9 +55,9 @@ deploy-libs :
 
 # Deploy
 deploy-world-libs-one	:;
-	forge script scripts/misc/LibraryPreCompileOne.sol --rpc-url $(if $(isMainnet),${RPC_WORLD},${RPC_WORLD_SEPOLIA})  --private-keys ${PRIVATE_KEY} --verify --slow --broadcast --legacy --etherscan-api-key ${ETHERSCAN_API_KEY_WORLD}
+	forge script scripts/misc/LibraryPreCompileOne.sol --rpc-url $(if $(isMainnet),${RPC_WORLD},${RPC_WORLD_SEPOLIA})  --private-keys ${BETA_DEPLOYER_PRIVATE_KEY} --verify --slow --broadcast --legacy --etherscan-api-key ${ETHERSCAN_API_KEY_WORLD}
 deploy-world-libs-two	:;
-	forge script scripts/misc/LibraryPreCompileTwo.sol --rpc-url $(if $(isMainnet),${RPC_WORLD},${RPC_WORLD_SEPOLIA})  --private-keys ${PRIVATE_KEY} --verify --slow --broadcast --legacy --etherscan-api-key ${ETHERSCAN_API_KEY_WORLD}
+	forge script scripts/misc/LibraryPreCompileTwo.sol --rpc-url $(if $(isMainnet),${RPC_WORLD},${RPC_WORLD_SEPOLIA})  --private-keys ${BETA_DEPLOYER_PRIVATE_KEY} --verify --slow --broadcast --legacy --etherscan-api-key ${ETHERSCAN_API_KEY_WORLD}
 
 deploy-world-libs :
 	make deploy-libs-one isMainnet=${isMainnet}
@@ -66,19 +66,29 @@ deploy-world-libs :
 deploy-world :
 	forge script scripts/DeployWorldSepolia.sol:Deploy \
     --rpc-url $(if $(isMainnet),${RPC_WORLD},${RPC_WORLD_SEPOLIA}) \
-    --private-keys ${PRIVATE_KEY} \
+    --private-keys ${BETA_DEPLOYER_PRIVATE_KEY} \
 	--etherscan-api-key ${ETHERSCAN_API_KEY_WORLD} \
     --broadcast \
     --verify \
 	--legacy \
-    -vvvv 
+    -vvvv
 
 verify-all-world:
 	forge script scripts/DeployWorldSepolia.sol:Deploy \
     --rpc-url $(if $(isMainnet),${RPC_WORLD},${RPC_WORLD_SEPOLIA}) \
-    --private-keys ${PRIVATE_KEY} \
+    --private-keys ${BETA_DEPLOYER_PRIVATE_KEY} \
 	--etherscan-api-key ${ETHERSCAN_API_KEY_WORLD} \
 	--resume \
     --verify \
 	--legacy \
     -vvvv 
+
+deploy-witnet-adapter :
+	forge script scripts/DeployWitnetAdapter.sol:Deploy \
+	--rpc-url $(if $(isMainnet),${RPC_WORLD},${RPC_WORLD_SEPOLIA}) \
+	--private-keys ${BETA_DEPLOYER_PRIVATE_KEY} \
+	--etherscan-api-key ${ETHERSCAN_API_KEY_WORLD} \
+    --broadcast \
+    --verify \
+	--legacy \
+    -vvvv

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 import './MarketInput.sol';
 import {DefaultMarketInput} from './DefaultMarketInput.sol';
+import {WitnetPriceAdapter} from '../../contracts/dependencies/witnet/WitnetPriceAdapter.sol';
 
 contract WorldSepoliaMarketInput is DefaultMarketInput {
   function _getMarketInput(
@@ -39,6 +40,7 @@ contract WorldSepoliaMarketInput is DefaultMarketInput {
 
     // World Sepolia specific Oracle config
     config.witnetProxy = 0x1111AbA2164AcdC6D291b08DfB374280035E1111;
+    config.oracleDecimals = 6;
     config.assets = assets;
     config.currencyIds = currencyIds;
 
@@ -46,14 +48,9 @@ contract WorldSepoliaMarketInput is DefaultMarketInput {
   }
 }
 
-
 // world sepolia: https://sepolia.worldscan.org/tokentxns
 // eth/usd: 0x3d15f701, 0x4200000000000000000000000000000000000006
 // wld/usd: 0xa59df722, 0x8803e47fD253915F9c860837f391Aa71B3e03c5A
-
-// world: https://worldscan.org/tokens
-// (w)eth/usd: 0x3d15f701, 0x4200000000000000000000000000000000000006
-//    wld/usd: 0xa59df722, 0x2cFc85d8E48F8EAB294be644d9E25C3030863003
 
 // price feed contract:
 // 0x1111AbA2164AcdC6D291b08DfB374280035E1111
