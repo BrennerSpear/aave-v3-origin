@@ -44,6 +44,10 @@ contract WorldSepoliaMarketInput is DefaultMarketInput {
     config.assets = assets;
     config.currencyIds = currencyIds;
 
+    config
+      .marketReferenceCurrencyPriceInUsdProxyAggregator = 0x67f64516DDEC692c1fE956444E1F13E1761E9F2d;
+    config.networkBaseTokenPriceInUsdProxyAggregator = 0x67f64516DDEC692c1fE956444E1F13E1761E9F2d;
+
     return (roles, config, flags, deployedContracts);
   }
 }

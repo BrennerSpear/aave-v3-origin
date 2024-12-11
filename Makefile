@@ -73,6 +73,16 @@ deploy-world :
 	--legacy \
     -vvvv
 
+deploy-world-mainnet :
+	forge script scripts/DeployWorld.sol:Deploy \
+    --rpc-url ${RPC_WORLD} \
+    --private-keys ${BETA_DEPLOYER_PRIVATE_KEY} \
+	--etherscan-api-key ${ETHERSCAN_API_KEY_WORLD} \
+    --broadcast \
+    --verify \
+	--legacy \
+    -vvvv
+
 verify-all-world:
 	forge script scripts/DeployWorldSepolia.sol:Deploy \
     --rpc-url $(if $(isMainnet),${RPC_WORLD},${RPC_WORLD_SEPOLIA}) \

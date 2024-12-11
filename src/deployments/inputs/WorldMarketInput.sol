@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 import './MarketInput.sol';
 import {DefaultMarketInput} from './DefaultMarketInput.sol';
+import {WitnetPriceAdapter} from '../../contracts/dependencies/witnet/WitnetPriceAdapter.sol';
 
 contract WorldMarketInput is DefaultMarketInput {
   function _getMarketInput(
@@ -42,6 +43,10 @@ contract WorldMarketInput is DefaultMarketInput {
     config.oracleDecimals = 6;
     config.assets = assets;
     config.currencyIds = currencyIds;
+
+    config
+      .marketReferenceCurrencyPriceInUsdProxyAggregator = 0x4Eab830b62D3B550FCB0e47Ee630Cd74d09EdDf3;
+    config.networkBaseTokenPriceInUsdProxyAggregator = 0x4Eab830b62D3B550FCB0e47Ee630Cd74d09EdDf3;
 
     return (roles, config, flags, deployedContracts);
   }
