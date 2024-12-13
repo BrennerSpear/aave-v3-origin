@@ -87,7 +87,19 @@ verify-all-world:
 	forge script scripts/DeployWorldSepolia.sol:Deploy \
     --rpc-url $(if $(isMainnet),${RPC_WORLD},${RPC_WORLD_SEPOLIA}) \
     --private-keys ${BETA_DEPLOYER_PRIVATE_KEY} \
-	--etherscan-api-key ${ETHERSCAN_API_KEY_WORLD} \
+	--etherscan-api-key ${TENDERLY_ACCESS_TOKEN} \
+	--verifier-url ${TENDERLY_WORLD_URL} \
+	--resume \
+    --verify \
+	--legacy \
+    -vvvv 
+
+verify-all-world-mainnet:
+	forge script scripts/DeployWorld.sol:Deploy \
+    --rpc-url ${RPC_WORLD} \
+    --private-keys ${BETA_DEPLOYER_PRIVATE_KEY} \
+	--etherscan-api-key ${TENDERLY_ACCESS_TOKEN} \
+	--verifier-url ${TENDERLY_WORLD_URL} \
 	--resume \
     --verify \
 	--legacy \
