@@ -46,7 +46,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     address marketOwner = makeAddr('marketOwner');
     address poolAdmin = makeAddr('poolAdmin');
     address emergencyAdmin = makeAddr('emergencyAdmin');
-    bytes32 empty;
+    bytes32 emptySalt;
     roles = Roles(marketOwner, poolAdmin, emergencyAdmin);
 
     config = MarketConfig(
@@ -54,11 +54,11 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       makeAddr('ethUsdOracle'),
       'Testnet Market',
       8,
-      address(new AugustusRegistryMock()), // replace with mock of augustus registry
-      address(new SequencerOracle(poolAdmin)),
-      2 hours, // l2PriceOracleSentinelGracePeriod
+      address(new AugustusRegistryMock()),
+      address(0),
+      0,
       8080,
-      empty,
+      emptySalt,
       address(new WETH9()),
       address(0),
       0.0005e4,
@@ -66,7 +66,10 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       address(0),
       address(0),
       address(0),
-      0
+      0,
+      address(0),
+      new address[](0),
+      new bytes4[](0)
     );
     flags = DeployFlags(true);
 

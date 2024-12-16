@@ -193,6 +193,8 @@ contract AaveOracle is IAaveOracle {
     return address(_fallbackOracle);
   }
 
+  function setAssetSources(address[] calldata, address[] calldata) external override {}
+
   function _onlyAssetListingOrPoolAdmins() internal view {
     IACLManager aclManager = IACLManager(ADDRESSES_PROVIDER.getACLManager());
     require(

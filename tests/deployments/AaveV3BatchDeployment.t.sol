@@ -56,7 +56,10 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       address(0),
       address(0),
       address(0),
-      0
+      0,
+      address(0), // witnetProxy
+      new address[](0), // assets
+      new bytes4[](0) // currencyIds
     );
   }
 

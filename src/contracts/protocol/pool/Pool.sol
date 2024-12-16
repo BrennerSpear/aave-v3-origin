@@ -189,42 +189,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   }
 
   /// @inheritdoc IPool
-  function supplyWithPermit2(
-    address asset,
-    uint256 amount,
-    address onBehalfOf,
-    uint16 referralCode,
-    uint256 nonce,
-    uint256 deadline,
-    bytes calldata signature
-  ) public virtual override {
-    try
-      PERMIT2.permitTransferFrom(
-        IPermit2.PermitTransferFrom({
-          permitted: IPermit2.TokenPermissions({token: asset, amount: amount}),
-          nonce: nonce,
-          deadline: deadline
-        }),
-        IPermit2.SignatureTransferDetails({to: address(this), requestedAmount: amount}),
-        msg.sender,
-        signature
-      )
-    {} catch {}
-
-    SupplyLogic.executeSupply(
-      _reserves,
-      _reservesList,
-      _usersConfig[onBehalfOf],
-      DataTypes.ExecuteSupplyParams({
-        asset: asset,
-        amount: amount,
-        onBehalfOf: onBehalfOf,
-        referralCode: referralCode
-      })
-    );
-  }
-
-  /// @inheritdoc IPool
   function withdraw(
     address asset,
     uint256 amount,
@@ -318,41 +282,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
         permitV,
         permitR,
         permitS
-      )
-    {} catch {}
-
-    {
-      DataTypes.ExecuteRepayParams memory params = DataTypes.ExecuteRepayParams({
-        asset: asset,
-        amount: amount,
-        interestRateMode: DataTypes.InterestRateMode(interestRateMode),
-        onBehalfOf: onBehalfOf,
-        useATokens: false
-      });
-      return BorrowLogic.executeRepay(_reserves, _reservesList, _usersConfig[onBehalfOf], params);
-    }
-  }
-
-  /// @inheritdoc IPool
-  function repayWithPermit2(
-    address asset,
-    uint256 amount,
-    uint256 interestRateMode,
-    address onBehalfOf,
-    uint256 nonce,
-    uint256 deadline,
-    bytes calldata signature
-  ) public virtual override returns (uint256) {
-    try
-      PERMIT2.permitTransferFrom(
-        IPermit2.PermitTransferFrom({
-          permitted: IPermit2.TokenPermissions({token: asset, amount: amount}),
-          nonce: nonce,
-          deadline: deadline
-        }),
-        IPermit2.SignatureTransferDetails({to: address(this), requestedAmount: amount}),
-        msg.sender,
-        signature
       )
     {} catch {}
 
