@@ -23,6 +23,7 @@ import '../../contracts/helpers/interfaces/IWrappedTokenGatewayV3.sol';
 import '../../contracts/helpers/L2Encoder.sol';
 import {ICollector} from '../../contracts/treasury/ICollector.sol';
 import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
+import {AavePermit2Router} from '../../contracts/protocol/pool/AavePermit2Router.sol';
 
 struct ContractsReport {
   IPoolAddressesProviderRegistry poolAddressesProviderRegistry;
@@ -51,6 +52,8 @@ struct ContractsReport {
   IEmissionManager emissionManager;
   IRewardsController rewardsControllerImplementation;
   IRewardsController rewardsControllerProxy;
+  AavePermit2Router permit2RouterImplementation;
+  AavePermit2Router permit2Router;
 }
 
 struct MarketReport {
@@ -87,6 +90,8 @@ struct MarketReport {
   address staticATokenFactoryProxy;
   address staticATokenImplementation;
   address revenueSplitter;
+  address permit2RouterProxy;
+  address permit2RouterImplementation;
 }
 
 struct LibrariesReport {
@@ -172,6 +177,7 @@ struct SetupReport {
   address poolConfiguratorProxy;
   address rewardsControllerProxy;
   address aclManager;
+  address permit2RouterProxy;
 }
 
 struct PeripheryReport {
@@ -182,6 +188,7 @@ struct PeripheryReport {
   address emissionManager;
   address rewardsControllerImplementation;
   address revenueSplitter;
+  address permit2RouterImplementation;
 }
 
 struct ParaswapReport {

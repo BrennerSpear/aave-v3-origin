@@ -163,6 +163,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       gettersReportOne.protocolDataProvider,
       peripheryReportOne.aaveOracle,
       peripheryReportOne.rewardsControllerImplementation,
+      peripheryReportOne.permit2RouterImplementation,
       miscReport.priceOracleSentinel
     );
   }

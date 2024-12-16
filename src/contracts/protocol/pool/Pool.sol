@@ -18,7 +18,6 @@ import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.so
 import {IPool} from '../../interfaces/IPool.sol';
 import {IACLManager} from '../../interfaces/IACLManager.sol';
 import {PoolStorage} from './PoolStorage.sol';
-import {IPermit2} from '../../interfaces/IPermit2.sol';
 
 /**
  * @title Pool contract
@@ -40,8 +39,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   using ReserveLogic for DataTypes.ReserveData;
 
   IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
-  // Uniswap's Permit2 contract address - same on all chains
-  IPermit2 public constant PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
   /**
    * @dev Only pool configurator can call functions marked by this modifier.

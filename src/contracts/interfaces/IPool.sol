@@ -256,26 +256,6 @@ interface IPool {
   ) external;
 
   /**
-   * @notice Supplies an `amount` of underlying asset into the reserve using permit2, receiving in return overlying aTokens
-   * @param asset The address of the underlying asset to supply
-   * @param amount The amount to be supplied
-   * @param onBehalfOf The address that will receive the aTokens
-   * @param referralCode Code used to register the integrator originating the operation, for potential rewards
-   * @param nonce The nonce for the permit2 signature
-   * @param deadline The deadline timestamp that the permit2 signature is valid
-   * @param signature The permit2 signature
-   */
-  function supplyWithPermit2(
-    address asset,
-    uint256 amount,
-    address onBehalfOf,
-    uint16 referralCode,
-    uint256 nonce,
-    uint256 deadline,
-    bytes calldata signature
-  ) external;
-
-  /**
    * @notice Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
    * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
    * @param asset The address of the underlying asset to withdraw
@@ -372,28 +352,6 @@ interface IPool {
     address asset,
     uint256 amount,
     uint256 interestRateMode
-  ) external returns (uint256);
-
-  /**
-   * @notice Repays a borrowed `amount` on a specific reserve using permit2
-   * @param asset The address of the borrowed underlying asset previously borrowed
-   * @param amount The amount to repay
-   * - Send the value type(uint256).max in order to repay the whole debt for `asset` on the specific `debtMode`
-   * @param interestRateMode The interest rate mode at which the user wants to repay
-   * @param onBehalfOf Address of the user who will get his debt reduced/removed
-   * @param nonce The nonce for the permit2 signature
-   * @param deadline The deadline timestamp that the permit2 signature is valid
-   * @param signature The permit2 signature
-   * @return The final amount repaid
-   */
-  function repayWithPermit2(
-    address asset,
-    uint256 amount,
-    uint256 interestRateMode,
-    address onBehalfOf,
-    uint256 nonce,
-    uint256 deadline,
-    bytes calldata signature
   ) external returns (uint256);
 
   /**

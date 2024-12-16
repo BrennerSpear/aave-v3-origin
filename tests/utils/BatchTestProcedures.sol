@@ -141,6 +141,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       gettersReport1.protocolDataProvider,
       peripheryReport.aaveOracle,
       peripheryReport.rewardsControllerImplementation,
+      peripheryReport.permit2RouterImplementation,
       miscReport.priceOracleSentinel
     );
 

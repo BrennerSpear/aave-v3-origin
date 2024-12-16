@@ -70,6 +70,7 @@ library AaveV3BatchOrchestration {
       gettersReport1.protocolDataProvider,
       peripheryReport.aaveOracle,
       peripheryReport.rewardsControllerImplementation,
+      peripheryReport.permit2RouterImplementation,
       miscReport.priceOracleSentinel
     );
 
@@ -327,6 +328,8 @@ library AaveV3BatchOrchestration {
     report.staticATokenImplementation = staticATokenReport.staticATokenImplementation;
     report.transparentProxyFactory = staticATokenReport.transparentProxyFactory;
     report.revenueSplitter = peripheryReport.revenueSplitter;
+    report.permit2RouterImplementation = peripheryReport.permit2RouterImplementation;
+    report.permit2RouterProxy = setupReport.permit2RouterProxy;
 
     return report;
   }

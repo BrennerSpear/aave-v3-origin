@@ -98,6 +98,13 @@ interface IPoolAddressesProvider {
   );
 
   /**
+   * @dev Emitted when the Permit2Router implementation is updated.
+   * @param oldAddress The old Permit2Router implementation
+   * @param newAddress The new Permit2Router implementation
+   */
+  event Permit2RouterUpdated(address indexed oldAddress, address indexed newAddress);
+
+  /**
    * @notice Returns the id of the Aave market to which this contract points to.
    * @return The market id
    */
@@ -151,6 +158,19 @@ interface IPoolAddressesProvider {
    * @param newPoolImpl The new Pool implementation
    */
   function setPoolImpl(address newPoolImpl) external;
+
+  /**
+   * @notice Returns the address of the Permit2Router.
+   * @return The address of the Permit2Router
+   */
+  function getPermit2Router() external view returns (address);
+
+  /**
+   * @notice Updates the implementation of the Permit2Router, or creates a proxy
+   * setting the new `Permit2Router` implementation when the function is called for the first time.
+   * @param newPermit2RouterImpl The new Permit2Router implementation
+   */
+  function setPermit2RouterImpl(address newPermit2RouterImpl) external;
 
   /**
    * @notice Returns the address of the PoolConfigurator proxy.
@@ -224,4 +244,10 @@ interface IPoolAddressesProvider {
    * @param newDataProvider The address of the new DataProvider
    */
   function setPoolDataProvider(address newDataProvider) external;
+
+  /**
+   * @notice Returns the address of the Permit2Router proxy.
+   * @return The address of the Permit2Router proxy
+   */
+  function getPermit2RouterProxy() external view returns (address);
 }

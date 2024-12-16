@@ -27,6 +27,7 @@ contract AaveV3SetupProcedure is AaveV3OracleSetupProcedure {
     address rewardsControllerImplementation;
     address priceOracleSentinel;
     address witnetProxy;
+    address permit2RouterImplementation;
     address[] assets;
     bytes4[] currencyIds;
   }
@@ -58,6 +59,7 @@ contract AaveV3SetupProcedure is AaveV3OracleSetupProcedure {
     address protocolDataProvider,
     address aaveOracle,
     address rewardsControllerImplementation,
+    address permit2RouterImplementation,
     address priceOracleSentinel
   ) internal returns (SetupReport memory) {
     _validateMarketSetup(roles);
@@ -74,6 +76,7 @@ contract AaveV3SetupProcedure is AaveV3OracleSetupProcedure {
         rewardsControllerImplementation,
         priceOracleSentinel,
         config.witnetProxy,
+        permit2RouterImplementation,
         config.assets,
         config.currencyIds
       )
@@ -134,6 +137,11 @@ contract AaveV3SetupProcedure is AaveV3OracleSetupProcedure {
       provider.setPriceOracleSentinel(input.priceOracleSentinel);
     }
 
+    if (input.permit2RouterImplementation != address(0)) {
+      provider.setPermit2RouterImpl(input.permit2RouterImplementation);
+      report.permit2RouterProxy = provider.getPermit2RouterProxy();
+    }
+
     bytes32 controllerId = keccak256('INCENTIVES_CONTROLLER');
     if (input.rewardsControllerProxy == address(0)) {
       if (input.rewardsControllerImplementation == address(0))
@@ -159,8 +167,6 @@ contract AaveV3SetupProcedure is AaveV3OracleSetupProcedure {
     MarketConfig memory config,
     address oracle
   ) internal returns (address) {
-
-
     IPoolAddressesProvider provider = IPoolAddressesProvider(poolAddressesProvider);
 
     // Temporal admin set to the contract

@@ -42,7 +42,9 @@ library MarketReportUtils {
         variableDebtToken: IVariableDebtToken(report.variableDebtToken),
         emissionManager: IEmissionManager(report.emissionManager),
         rewardsControllerImplementation: IRewardsController(report.rewardsControllerImplementation),
-        rewardsControllerProxy: IRewardsController(report.rewardsControllerProxy)
+        rewardsControllerProxy: IRewardsController(report.rewardsControllerProxy),
+        permit2RouterImplementation: AavePermit2Router(report.permit2RouterImplementation),
+        permit2Router: AavePermit2Router(report.permit2RouterProxy)
       });
   }
 }

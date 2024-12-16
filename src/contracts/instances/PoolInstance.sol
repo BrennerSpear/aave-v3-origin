@@ -11,13 +11,6 @@ contract PoolInstance is Pool {
   constructor(IPoolAddressesProvider provider) Pool(provider) {}
 
   /**
-   * @dev returns the revision version of the contract
-   */
-  function getRevision() internal pure virtual override returns (uint256) {
-    return POOL_REVISION;
-  }
-
-  /**
    * @notice Initializes the Pool.
    * @dev Function is invoked by the proxy contract when the Pool contract is added to the
    * PoolAddressesProvider of the market.
@@ -26,5 +19,12 @@ contract PoolInstance is Pool {
    */
   function initialize(IPoolAddressesProvider provider) external virtual override initializer {
     require(provider == ADDRESSES_PROVIDER, Errors.INVALID_ADDRESSES_PROVIDER);
+  }
+
+  /**
+   * @dev returns the revision version of the contract
+   */
+  function getRevision() internal pure virtual override returns (uint256) {
+    return POOL_REVISION;
   }
 }

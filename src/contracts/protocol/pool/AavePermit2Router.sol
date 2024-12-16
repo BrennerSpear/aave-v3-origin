@@ -1,30 +1,47 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {ISignatureTransfer} from 'permit2/interfaces/ISignatureTransfer.sol';
 import {IPool} from '../../interfaces/IPool.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {VersionedInitializable} from '../../misc/aave-upgradeability/VersionedInitializable.sol';
+import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';
+import {Errors} from '../libraries/helpers/Errors.sol';
+import {ISignatureTransfer} from 'permit2/interfaces/ISignatureTransfer.sol';
 
 /**
  * @title AavePermit2Router
  * @author Aave
  * @notice Router contract to handle Permit2 operations for the Aave Pool
  */
-contract AavePermit2Router {
+contract AavePermit2Router is VersionedInitializable {
   using SafeERC20 for IERC20;
 
-  ISignatureTransfer public immutable PERMIT2;
-  IPool public immutable POOL;
+  // Uniswap's Permit2 contract address - same on all chains
+  ISignatureTransfer public constant PERMIT2 =
+    ISignatureTransfer(0x000000000022D473030F116dDEE9F6B43aC78BA3);
+
+  IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
+
+  constructor(IPoolAddressesProvider provider) {
+    ADDRESSES_PROVIDER = provider;
+  }
 
   /**
-   * @dev Constructor
-   * @param permit2 The Permit2 contract address
-   * @param pool The Aave Pool contract address
+   * @notice Initializes the Router.
+   * @dev Function is invoked by the proxy contract when the Router contract is added to the
+   * PoolAddressesProvider of the market.
+   * @param provider The address of the PoolAddressesProvider
    */
-  constructor(ISignatureTransfer permit2, IPool pool) {
-    PERMIT2 = permit2;
-    POOL = pool;
+  function initialize(IPoolAddressesProvider provider) external initializer {
+    require(provider == ADDRESSES_PROVIDER, Errors.INVALID_ADDRESSES_PROVIDER);
+  }
+
+  /**
+   * @dev Returns the revision version of the contract
+   */
+  function getRevision() internal pure override returns (uint256) {
+    return 1;
   }
 
   /**
@@ -59,10 +76,10 @@ contract AavePermit2Router {
     );
 
     // Approve the Pool to spend the tokens
-    IERC20(asset).forceApprove(address(POOL), amount);
+    IERC20(asset).forceApprove(address(ADDRESSES_PROVIDER.getPool()), amount);
 
     // Supply the tokens to the Pool
-    POOL.supply(asset, amount, onBehalfOf, referralCode);
+    IPool(ADDRESSES_PROVIDER.getPool()).supply(asset, amount, onBehalfOf, referralCode);
   }
 
   /**
@@ -97,9 +114,9 @@ contract AavePermit2Router {
     );
 
     // Approve the Pool to spend the tokens
-    IERC20(asset).forceApprove(address(POOL), amount);
+    IERC20(asset).forceApprove(address(ADDRESSES_PROVIDER.getPool()), amount);
 
     // Repay the tokens to the Pool
-    return POOL.repay(asset, amount, interestRateMode, onBehalfOf);
+    return IPool(ADDRESSES_PROVIDER.getPool()).repay(asset, amount, interestRateMode, onBehalfOf);
   }
 }

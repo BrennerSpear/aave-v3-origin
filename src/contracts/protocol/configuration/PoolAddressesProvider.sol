@@ -27,6 +27,7 @@ contract PoolAddressesProvider is Ownable, IPoolAddressesProvider {
   bytes32 private constant ACL_ADMIN = 'ACL_ADMIN';
   bytes32 private constant PRICE_ORACLE_SENTINEL = 'PRICE_ORACLE_SENTINEL';
   bytes32 private constant DATA_PROVIDER = 'DATA_PROVIDER';
+  bytes32 private constant PERMIT2_ROUTER = 'PERMIT2_ROUTER';
 
   /**
    * @dev Constructor.
@@ -81,6 +82,18 @@ contract PoolAddressesProvider is Ownable, IPoolAddressesProvider {
     address oldPoolImpl = _getProxyImplementation(POOL);
     _updateImpl(POOL, newPoolImpl);
     emit PoolUpdated(oldPoolImpl, newPoolImpl);
+  }
+
+  /// @inheritdoc IPoolAddressesProvider
+  function getPermit2Router() external view override returns (address) {
+    return getAddress(PERMIT2_ROUTER);
+  }
+
+  /// @inheritdoc IPoolAddressesProvider
+  function setPermit2RouterImpl(address newPermit2RouterImpl) external override onlyOwner {
+    address oldPermit2Router = _getProxyImplementation(PERMIT2_ROUTER);
+    _updateImpl(PERMIT2_ROUTER, newPermit2RouterImpl);
+    emit Permit2RouterUpdated(oldPermit2Router, newPermit2RouterImpl);
   }
 
   /// @inheritdoc IPoolAddressesProvider
@@ -153,6 +166,11 @@ contract PoolAddressesProvider is Ownable, IPoolAddressesProvider {
     address oldDataProvider = _addresses[DATA_PROVIDER];
     _addresses[DATA_PROVIDER] = newDataProvider;
     emit PoolDataProviderUpdated(oldDataProvider, newDataProvider);
+  }
+
+  /// @inheritdoc IPoolAddressesProvider
+  function getPermit2RouterProxy() external view override returns (address) {
+    return _addresses[PERMIT2_ROUTER];
   }
 
   /**

@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {AaveV3TreasuryProcedure} from '../../../contracts/procedures/AaveV3TreasuryProcedure.sol';
 import {AaveV3OracleProcedure} from '../../../contracts/procedures/AaveV3OracleProcedure.sol';
 import {AaveV3IncentiveProcedure} from '../../../contracts/procedures/AaveV3IncentiveProcedure.sol';
+import {AaveV3Permit2RouterProcedure} from '../../../contracts/procedures/AaveV3Permit2RouterProcedure.sol';
 import {AaveV3DefaultRateStrategyProcedure} from '../../../contracts/procedures/AaveV3DefaultRateStrategyProcedure.sol';
 import {IOwnable} from 'solidity-utils/contracts/transparent-proxy/interfaces/IOwnable.sol';
 import '../../../interfaces/IMarketReportTypes.sol';
@@ -14,7 +15,8 @@ import {RevenueSplitter} from '../../../../contracts/treasury/RevenueSplitter.so
 contract AaveV3PeripheryBatch is
   AaveV3TreasuryProcedure,
   AaveV3OracleProcedure,
-  AaveV3IncentiveProcedure
+  AaveV3IncentiveProcedure,
+  AaveV3Permit2RouterProcedure
 {
   PeripheryReport internal _report;
 
@@ -32,6 +34,9 @@ contract AaveV3PeripheryBatch is
     }
 
     _report.aaveOracle = _deployAaveOracle(config.oracleDecimals, poolAddressesProvider);
+
+    // Deploy Permit2Router
+    _report.permit2RouterImplementation = _deployPermit2Router(poolAddressesProvider);
 
     if (config.treasury == address(0)) {
       TreasuryReport memory treasuryReport = _deployAaveV3Treasury(
@@ -64,7 +69,6 @@ contract AaveV3PeripheryBatch is
       _report.emissionManager = IRewardsController(config.incentivesProxy).getEmissionManager();
     }
   }
-
   function getPeripheryReport() external view returns (PeripheryReport memory) {
     return _report;
   }
