@@ -32,7 +32,8 @@ contract AavePermit2RouterTest is TestnetProcedures, PermitSignature, DeployPerm
   SequencerOracle internal sequencerOracleMock;
 
   function setUp() public virtual {
-    super.initL2TestEnvironment();
+    initL2TestEnvironment();
+    setupMockPriceOracle();
 
     // Setup test user
     userPrivateKey = 0xf738bd2dfd50b39e3245ff30f3bfcebd827218f37a41a4745566f0250d7f46ef; // Use a proper private key for testing
@@ -52,19 +53,9 @@ contract AavePermit2RouterTest is TestnetProcedures, PermitSignature, DeployPerm
     // Use deployed router
     router = AavePermit2Router(contracts.permit2Router);
 
-    // sequencerOracleMock = new SequencerOracle(poolAdmin);
-    // priceOracleSentinel = new PriceOracleSentinel(
-    //   IPoolAddressesProvider(report.poolAddressesProvider),
-    //   ISequencerOracle(address(sequencerOracleMock)),
-    //   1 days
-    // );
-
-    // vm.prank(poolAdmin);
-    // sequencerOracleMock.setAnswer(false, 0);
-
-    // vm.startPrank(carol);
-    // contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
-    // vm.stopPrank();
+    vm.startPrank(carol);
+    contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
+    vm.stopPrank();
 
     vm.startPrank(user);
     // Approve Permit2 to spend WBTC and USDX
@@ -88,25 +79,6 @@ contract AavePermit2RouterTest is TestnetProcedures, PermitSignature, DeployPerm
       deadlineOneHour
     );
 
-    // address[] memory assets = new address[](3);
-    // assets[0] = tokenList.usdx;
-    // assets[1] = tokenList.wbtc;
-    // assets[2] = tokenList.weth;
-
-    // console2.logString('Getting prices...');
-    // console2.logAddress(address(contracts.aaveOracle));
-    // console2.logAddress(address(contracts.fallbackOracle));
-
-    // uint256[] memory prices = contracts.aaveOracle.getAssetsPrices(assets);
-
-    // console2.logString('Asset Prices:');
-    // for (uint256 i = 0; i < assets.length; i++) {
-    //   console2.logString('Asset:');
-    //   console2.logAddress(assets[i]);
-    //   console2.logString('Price:');
-    //   console2.logUint(prices[i]);
-    // }
-
     vm.startPrank(user);
 
     // Supply with Permit2
@@ -127,75 +99,63 @@ contract AavePermit2RouterTest is TestnetProcedures, PermitSignature, DeployPerm
     assertEq(IAToken(aWBTC).scaledBalanceOf(user), supplyAmount);
   }
 
-  // function test_repayWithPermit2() public {
-  //   // First supply WBTC as collateral
-  //   uint256 supplyAmount = 1e8; // 1 WBTC (8 decimals)
-  //   deal(tokenList.wbtc, user, supplyAmount);
-
-  //   uint256 deadlineOneHour = block.timestamp + 1 hours;
-
-  //   // Generate permit2 signature for supply
-  //   bytes memory supplySignature = _getPermit2Signature(
-  //     address(router),
-  //     tokenList.wbtc,
-  //     supplyAmount,
-  //     0, // nonce
-  //     deadlineOneHour
-  //   );
-
-  //   vm.startPrank(user);
-
-  //   // Supply WBTC with Permit2
-  //   router.supplyWithPermit2(
-  //     tokenList.wbtc,
-  //     supplyAmount,
-  //     user,
-  //     0, // referralCode
-  //     deadlineOneHour,
-  //     0, // nonce
-  //     supplySignature
-  //   );
-
-  //   // Borrow USDX using the pool directly
-  //   uint256 borrowAmount = 1000e6; // 1000 USDX
-  //   contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, user);
-
-  //   vm.stopPrank();
-
-  //   // Now repay the USDX using permit2
-  //   deal(tokenList.usdx, user, borrowAmount);
-
-  //   // Generate permit2 signature for repay
-  //   bytes memory repaySignature = _getPermit2Signature(
-  //     address(router),
-  //     tokenList.usdx,
-  //     borrowAmount,
-  //     1, // nonce (incremented from supply)
-  //     deadlineOneHour
-  //   );
-
-  //   vm.startPrank(user);
-
-  //   // Repay with Permit2
-  //   router.repayWithPermit2(
-  //     tokenList.usdx,
-  //     borrowAmount,
-  //     2, // variable rate mode
-  //     user,
-  //     deadlineOneHour,
-  //     1, // nonce
-  //     repaySignature
-  //   );
-
-  //   vm.stopPrank();
-
-  //   // Verify repayment
-  //   (, , , , uint256 variableDebt, , , , ) = contracts.protocolDataProvider.getUserReserveData(
-  //     tokenList.usdx,
-  //     user
-  //   );
-  //   assertEq(variableDebt, 0);
-  // }
+  function test_repayWithPermit2() public {
+    // First supply WBTC as collateral
+    uint256 supplyAmount = 1e8; // 1 WBTC (8 decimals)
+    deal(tokenList.wbtc, user, supplyAmount);
+    uint256 deadlineOneHour = block.timestamp + 1 hours;
+    // Generate permit2 signature for supply
+    bytes memory supplySignature = _getPermit2Signature(
+      address(router),
+      tokenList.wbtc,
+      supplyAmount,
+      0, // nonce
+      deadlineOneHour
+    );
+    vm.startPrank(user);
+    // Supply WBTC with Permit2
+    router.supplyWithPermit2(
+      tokenList.wbtc,
+      supplyAmount,
+      user,
+      0, // referralCode
+      deadlineOneHour,
+      0, // nonce
+      supplySignature
+    );
+    // Borrow USDX using the pool directly
+    uint256 borrowAmount = 1000e6; // 1000 USDX
+    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, user);
+    vm.stopPrank();
+    // Now repay the USDX using permit2
+    deal(tokenList.usdx, user, borrowAmount);
+    // Generate permit2 signature for repay
+    bytes memory repaySignature = _getPermit2Signature(
+      address(router),
+      tokenList.usdx,
+      borrowAmount,
+      1, // nonce (incremented from supply)
+      deadlineOneHour
+    );
+    vm.startPrank(user);
+    // Repay with Permit2
+    router.repayWithPermit2(
+      tokenList.usdx,
+      borrowAmount,
+      2, // variable rate mode
+      user,
+      deadlineOneHour,
+      1, // nonce
+      repaySignature
+    );
+    vm.stopPrank();
+    // Verify repayment
+    (, , , , uint256 variableDebt, , , , ) = contracts.protocolDataProvider.getUserReserveData(
+      tokenList.usdx,
+      user
+    );
+    assertEq(variableDebt, 0);
+  }
 
   function _getPermit2Signature(
     address to,

@@ -20,6 +20,8 @@ import {PercentageMath} from '../../src/contracts/protocol/libraries/math/Percen
 import {AaveProtocolDataProvider} from '../../src/contracts/helpers/AaveProtocolDataProvider.sol';
 import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
 import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
+import {PriceOracle} from '../../src/contracts/mocks/oracle/PriceOracle.sol';
+import {IAaveOracle} from '../../src/contracts/interfaces/IAaveOracle.sol';
 
 struct TestVars {
   uint8 underlyingDecimals;
@@ -400,5 +402,20 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
           variableRateSlope2: 60_00
         })
       );
+  }
+
+  function setupMockPriceOracle() internal {
+    // Create a new mock price oracle for fallback
+    PriceOracle mockOracle = new PriceOracle();
+
+    // Set prices for each asset
+    vm.startPrank(poolAdmin);
+    mockOracle.setAssetPrice(tokenList.wbtc, 27000e8); // 27000 USD per WBTC
+    mockOracle.setAssetPrice(tokenList.weth, 1800e8); // 1800 USD per WETH
+    mockOracle.setAssetPrice(tokenList.usdx, 1e8); // 1 USD per USDX
+
+    // Set the mock oracle as the fallback oracle in AaveOracle
+    IAaveOracle(contracts.aaveOracle).setFallbackOracle(address(mockOracle));
+    vm.stopPrank();
   }
 }

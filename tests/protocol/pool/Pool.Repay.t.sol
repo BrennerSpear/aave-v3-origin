@@ -29,6 +29,7 @@ contract PoolRepayTests is TestnetProcedures {
 
   function setUp() public {
     initTestEnvironment();
+    setupMockPriceOracle();
 
     (address atoken, , address variableDebtUSDX) = contracts
       .protocolDataProvider
