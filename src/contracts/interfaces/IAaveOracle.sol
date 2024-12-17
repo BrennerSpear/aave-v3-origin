@@ -76,7 +76,7 @@ interface IAaveOracle is IPriceOracleGetter {
   function getFallbackOracle() external view returns (address);
 
   /**
-   * @notice Sets the price sources for multiple assets
+   * @notice (deprecated: this is for chainlink, not witnet) Sets the price sources for multiple assets
    * @param assets The addresses of the assets
    * @param sources The addresses of the price sources
    */

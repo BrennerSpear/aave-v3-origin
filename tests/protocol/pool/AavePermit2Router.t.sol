@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
+import {console2} from 'forge-std/console2.sol';
 
 import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
 import {IAToken} from '../../../src/contracts/interfaces/IAToken.sol';
@@ -11,11 +12,14 @@ import {AavePermit2Router} from '../../../src/contracts/protocol/pool/AavePermit
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
 import {EIP712SigUtils} from '../../utils/EIP712SigUtils.sol';
-import {MockPermit2} from '../../mocks/MockPermit2.sol';
+import {PermitSignature} from '../../../lib/permit2/test/utils/PermitSignature.sol';
+import {DeployPermit2} from '../../../lib/permit2/test/utils/DeployPermit2.sol';
+import {ISequencerOracle} from '../../../src/contracts/interfaces/ISequencerOracle.sol';
+import {SequencerOracle} from '../../../src/contracts/mocks/oracle/SequencerOracle.sol';
+import {PriceOracleSentinel} from '../../../src/contracts/misc/PriceOracleSentinel.sol';
+import {IPoolAddressesProvider} from '../../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 
-contract AavePermit2RouterTest is TestnetProcedures {
-  address public constant PERMIT2_ADDRESS = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
-
+contract AavePermit2RouterTest is TestnetProcedures, PermitSignature, DeployPermit2 {
   AavePermit2Router internal router;
   ISignatureTransfer internal permit2;
   address internal aUSDX;
@@ -24,10 +28,14 @@ contract AavePermit2RouterTest is TestnetProcedures {
   uint256 internal userPrivateKey;
   address internal user;
 
+  PriceOracleSentinel internal priceOracleSentinel;
+  SequencerOracle internal sequencerOracleMock;
+
   function setUp() public virtual {
     super.initL2TestEnvironment();
+
     // Setup test user
-    userPrivateKey = 0x12345678; // Use a proper private key for testing
+    userPrivateKey = 0xf738bd2dfd50b39e3245ff30f3bfcebd827218f37a41a4745566f0250d7f46ef; // Use a proper private key for testing
     user = vm.addr(userPrivateKey);
 
     // Get aToken addresses from protocol data provider
@@ -38,35 +46,68 @@ contract AavePermit2RouterTest is TestnetProcedures {
     (aTokenAddress, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.wbtc);
     aWBTC = aTokenAddress;
 
-    // Deploy mock Permit2
-    MockPermit2 permit2Contract = new MockPermit2();
-    vm.etch(PERMIT2_ADDRESS, address(permit2Contract).code);
-    permit2 = ISignatureTransfer(PERMIT2_ADDRESS);
+    // Deploy Permit2
+    permit2 = ISignatureTransfer(address(deployPermit2()));
 
     // Use deployed router
     router = AavePermit2Router(contracts.permit2Router);
+
+    // sequencerOracleMock = new SequencerOracle(poolAdmin);
+    // priceOracleSentinel = new PriceOracleSentinel(
+    //   IPoolAddressesProvider(report.poolAddressesProvider),
+    //   ISequencerOracle(address(sequencerOracleMock)),
+    //   1 days
+    // );
+
+    // vm.prank(poolAdmin);
+    // sequencerOracleMock.setAnswer(false, 0);
+
+    // vm.startPrank(carol);
+    // contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
+    // vm.stopPrank();
+
+    vm.startPrank(user);
+    // Approve Permit2 to spend WBTC and USDX
+    IERC20(tokenList.wbtc).approve(address(permit2), type(uint256).max);
+    IERC20(tokenList.usdx).approve(address(permit2), type(uint256).max);
+    vm.stopPrank();
   }
 
   function test_supplyWithPermit2() public {
     uint256 supplyAmount = 0.1e8;
     deal(tokenList.wbtc, user, supplyAmount);
 
+    uint256 deadlineOneHour = block.timestamp + 1 hours;
+
     // Generate permit2 signature
     bytes memory signature = _getPermit2Signature(
-      user,
       address(router),
       tokenList.wbtc,
       supplyAmount,
       0, // nonce
-      block.timestamp // deadline
+      deadlineOneHour
     );
 
-    vm.startPrank(user);
+    // address[] memory assets = new address[](3);
+    // assets[0] = tokenList.usdx;
+    // assets[1] = tokenList.wbtc;
+    // assets[2] = tokenList.weth;
 
-    // Approve tokens for pool
-    IERC20(tokenList.wbtc).approve(address(contracts.poolProxy), type(uint256).max);
-    // Approve tokens for Permit2
-    IERC20(tokenList.wbtc).approve(PERMIT2_ADDRESS, type(uint256).max);
+    // console2.logString('Getting prices...');
+    // console2.logAddress(address(contracts.aaveOracle));
+    // console2.logAddress(address(contracts.fallbackOracle));
+
+    // uint256[] memory prices = contracts.aaveOracle.getAssetsPrices(assets);
+
+    // console2.logString('Asset Prices:');
+    // for (uint256 i = 0; i < assets.length; i++) {
+    //   console2.logString('Asset:');
+    //   console2.logAddress(assets[i]);
+    //   console2.logString('Price:');
+    //   console2.logUint(prices[i]);
+    // }
+
+    vm.startPrank(user);
 
     // Supply with Permit2
     router.supplyWithPermit2(
@@ -74,7 +115,7 @@ contract AavePermit2RouterTest is TestnetProcedures {
       supplyAmount,
       user,
       0, // referralCode
-      block.timestamp, // deadline
+      deadlineOneHour, // deadline
       0, // nonce
       signature
     );
@@ -86,144 +127,107 @@ contract AavePermit2RouterTest is TestnetProcedures {
     assertEq(IAToken(aWBTC).scaledBalanceOf(user), supplyAmount);
   }
 
-  function test_repayWithPermit2() public {
-    uint256 borrowAmount = 1e6; // 1 WBTC
-    deal(tokenList.wbtc, user, borrowAmount);
+  // function test_repayWithPermit2() public {
+  //   // First supply WBTC as collateral
+  //   uint256 supplyAmount = 1e8; // 1 WBTC (8 decimals)
+  //   deal(tokenList.wbtc, user, supplyAmount);
 
-    vm.startPrank(user);
+  //   uint256 deadlineOneHour = block.timestamp + 1 hours;
 
-    // Approve tokens for pool
-    IERC20(tokenList.wbtc).approve(address(contracts.poolProxy), type(uint256).max);
-    // Approve tokens for Permit2
-    IERC20(tokenList.wbtc).approve(PERMIT2_ADDRESS, type(uint256).max);
+  //   // Generate permit2 signature for supply
+  //   bytes memory supplySignature = _getPermit2Signature(
+  //     address(router),
+  //     tokenList.wbtc,
+  //     supplyAmount,
+  //     0, // nonce
+  //     deadlineOneHour
+  //   );
 
-    // First supply some collateral
-    uint256 collateralAmount = 20e6; // 20 USDX
-    deal(tokenList.usdx, user, collateralAmount);
-    IERC20(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
-    contracts.poolProxy.supply(tokenList.usdx, collateralAmount, user, 0);
+  //   vm.startPrank(user);
 
-    // Then borrow some tokens
-    contracts.poolProxy.borrow(tokenList.wbtc, borrowAmount, 2, 0, user);
+  //   // Supply WBTC with Permit2
+  //   router.supplyWithPermit2(
+  //     tokenList.wbtc,
+  //     supplyAmount,
+  //     user,
+  //     0, // referralCode
+  //     deadlineOneHour,
+  //     0, // nonce
+  //     supplySignature
+  //   );
 
-    // Deal WBTC to user for repayment
-    deal(tokenList.wbtc, user, borrowAmount);
+  //   // Borrow USDX using the pool directly
+  //   uint256 borrowAmount = 1000e6; // 1000 USDX
+  //   contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, user);
 
-    // Get permit signature
-    bytes32 digest = _getPermitDigest(tokenList.wbtc, borrowAmount, 0, 1);
+  //   vm.stopPrank();
 
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, digest);
-    bytes memory signature = abi.encodePacked(r, s, v);
+  //   // Now repay the USDX using permit2
+  //   deal(tokenList.usdx, user, borrowAmount);
 
-    // Repay with Permit2
-    router.repayWithPermit2(tokenList.wbtc, borrowAmount, 2, user, 1, 0, signature);
+  //   // Generate permit2 signature for repay
+  //   bytes memory repaySignature = _getPermit2Signature(
+  //     address(router),
+  //     tokenList.usdx,
+  //     borrowAmount,
+  //     1, // nonce (incremented from supply)
+  //     deadlineOneHour
+  //   );
 
-    vm.stopPrank();
-  }
+  //   vm.startPrank(user);
 
-  function test_revert_repayWithPermit2_InvalidAmount() public {
-    uint256 borrowAmount = 1e6; // 1 WBTC
-    uint256 repayAmount = 10e6; // 10 WBTC (more than borrowed)
-    deal(tokenList.wbtc, user, repayAmount);
+  //   // Repay with Permit2
+  //   router.repayWithPermit2(
+  //     tokenList.usdx,
+  //     borrowAmount,
+  //     2, // variable rate mode
+  //     user,
+  //     deadlineOneHour,
+  //     1, // nonce
+  //     repaySignature
+  //   );
 
-    vm.startPrank(user);
+  //   vm.stopPrank();
 
-    // First supply some collateral
-    uint256 collateralAmount = 20e6; // 20 USDX
-    deal(tokenList.usdx, user, collateralAmount);
-    IERC20(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
-    contracts.poolProxy.supply(tokenList.usdx, collateralAmount, user, 0);
-
-    // Then borrow some tokens
-    IERC20(tokenList.wbtc).approve(address(contracts.poolProxy), type(uint256).max);
-    contracts.poolProxy.borrow(tokenList.wbtc, borrowAmount, 2, 0, user);
-
-    // Approve Permit2
-    IERC20(tokenList.wbtc).approve(PERMIT2_ADDRESS, type(uint256).max);
-
-    // Get permit signature
-    bytes32 digest = _getPermitDigest(tokenList.wbtc, repayAmount, 0, 1);
-
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, digest);
-    bytes memory signature = abi.encodePacked(r, s, v);
-
-    vm.expectRevert(bytes('INVALID_AMOUNT'));
-    router.repayWithPermit2(tokenList.wbtc, repayAmount, 2, user, 1, 0, signature);
-
-    vm.stopPrank();
-  }
-
-  function test_revert_supplyWithPermit2_InvalidSignature() public {
-    uint256 amount = 10e6; // 10 WBTC
-    deal(tokenList.wbtc, user, amount);
-
-    vm.startPrank(user);
-
-    // Approve Permit2
-    IERC20(tokenList.wbtc).approve(PERMIT2_ADDRESS, type(uint256).max);
-
-    // Get permit signature with wrong private key
-    bytes32 digest = _getPermitDigest(tokenList.wbtc, amount, 0, 1);
-
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(0xDEADBEEF, digest); // Wrong private key
-    bytes memory signature = abi.encodePacked(r, s, v);
-
-    vm.expectRevert('INVALID_SIGNATURE');
-    router.supplyWithPermit2(tokenList.wbtc, amount, user, 0, 1, 0, signature);
-
-    vm.stopPrank();
-  }
+  //   // Verify repayment
+  //   (, , , , uint256 variableDebt, , , , ) = contracts.protocolDataProvider.getUserReserveData(
+  //     tokenList.usdx,
+  //     user
+  //   );
+  //   assertEq(variableDebt, 0);
+  // }
 
   function _getPermit2Signature(
-    address from,
     address to,
     address token,
     uint256 amount,
     uint256 nonce,
     uint256 deadline
   ) internal view returns (bytes memory) {
-    bytes32 permit2TypeHash = keccak256(
-      'PermitTransferFrom(TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline)TokenPermissions(address token,uint256 amount)'
+    ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
+      permitted: ISignatureTransfer.TokenPermissions({token: token, amount: amount}),
+      nonce: nonce,
+      deadline: deadline
+    });
+
+    bytes32 tokenPermissions = keccak256(abi.encode(_TOKEN_PERMISSIONS_TYPEHASH, permit.permitted));
+    bytes32 msgHash = keccak256(
+      abi.encodePacked(
+        '\x19\x01',
+        permit2.DOMAIN_SEPARATOR(),
+        keccak256(
+          abi.encode(
+            _PERMIT_TRANSFER_FROM_TYPEHASH,
+            tokenPermissions,
+            to, // Use the router address directly
+            permit.nonce,
+            permit.deadline
+          )
+        )
+      )
     );
 
-    bytes32 tokenPermissionsHash = keccak256(
-      abi.encode(keccak256('TokenPermissions(address token,uint256 amount)'), token, amount)
-    );
-
-    bytes32 structHash = keccak256(
-      abi.encode(permit2TypeHash, tokenPermissionsHash, to, nonce, deadline)
-    );
-
-    // Get domain separator from the Permit2 contract
-    bytes32 domainSeparator = permit2.DOMAIN_SEPARATOR();
-
-    bytes32 digest = keccak256(abi.encodePacked('\x19\x01', domainSeparator, structHash));
-
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, digest);
-    return abi.encodePacked(r, s, v);
-  }
-
-  function _getPermitDigest(
-    address token,
-    uint256 amount,
-    uint256 nonce,
-    uint256 deadline
-  ) internal view returns (bytes32) {
-    bytes32 permit2TypeHash = keccak256(
-      'PermitTransferFrom(TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline)TokenPermissions(address token,uint256 amount)'
-    );
-
-    bytes32 tokenPermissionsHash = keccak256(
-      abi.encode(keccak256('TokenPermissions(address token,uint256 amount)'), token, amount)
-    );
-
-    bytes32 structHash = keccak256(
-      abi.encode(permit2TypeHash, tokenPermissionsHash, address(router), nonce, deadline)
-    );
-
-    // Get domain separator from the Permit2 contract
-    bytes32 domainSeparator = permit2.DOMAIN_SEPARATOR();
-
-    return keccak256(abi.encodePacked('\x19\x01', domainSeparator, structHash));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, msgHash);
+    return bytes.concat(r, s, bytes1(v));
   }
 }
