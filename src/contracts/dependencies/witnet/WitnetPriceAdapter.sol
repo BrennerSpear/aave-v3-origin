@@ -8,71 +8,67 @@ import {WitnetProxyInterface, WitnetPrice, WitnetResponseStatus} from './WitnetP
  * @title WitnetPriceAdapter
  * @notice Adapter contract that implements Chainlink's IEACAggregatorProxy interface
  * but uses Witnet price feeds internally. This allows Witnet price feeds to be used
- * in place of Chainlink price feeds in the Aave protocol.
+ * in place of Chainlink price feeds in the Aave protocol. This is used because networkBaseTokenPriceInUsdProxyAggregator and marketReferenceCurrencyPriceInUsdProxyAggregator need something to point at, even though we never have a native token market. we could also just remove those from UiPoolDataProviderV3 since we don't use them, but it was easier to just give it a valid contract to call instead.
  */
 contract WitnetPriceAdapter is IEACAggregatorProxy {
-    WitnetProxyInterface public immutable witnetProxy;
-    bytes4 public immutable currencyId;
-    uint8 private immutable _decimals;
+  WitnetProxyInterface public immutable witnetProxy;
+  bytes4 public immutable currencyId;
+  uint8 private immutable _decimals;
 
-    error PriceFeedNotReady();
-    error InvalidPrice();
+  error PriceFeedNotReady();
+  error InvalidPrice();
 
-    constructor(
-        address _witnetProxy,
-        bytes4 _currencyId,
-        uint8 decimalsValue
-    ) {
-        witnetProxy = WitnetProxyInterface(_witnetProxy);
-        currencyId = _currencyId;
-        _decimals = decimalsValue;
+  constructor(address _witnetProxy, bytes4 _currencyId, uint8 decimalsValue) {
+    witnetProxy = WitnetProxyInterface(_witnetProxy);
+    currencyId = _currencyId;
+    _decimals = decimalsValue;
+  }
+
+  /// @inheritdoc IEACAggregatorProxy
+  function decimals() external view returns (uint8) {
+    return _decimals;
+  }
+
+  /// @inheritdoc IEACAggregatorProxy
+  function latestAnswer() external view returns (int256) {
+    WitnetPrice memory price = witnetProxy.latestPrice(currencyId);
+
+    // Check if price feed is ready
+    if (price.status != WitnetResponseStatus.Ready) {
+      revert PriceFeedNotReady();
     }
 
-    /// @inheritdoc IEACAggregatorProxy
-    function decimals() external view returns (uint8) {
-        return _decimals;
+    // Convert uint256 to int256, checking for overflow
+    if (price.value > uint256(type(int256).max)) {
+      revert InvalidPrice();
     }
 
-    /// @inheritdoc IEACAggregatorProxy
-    function latestAnswer() external view returns (int256) {
-        WitnetPrice memory price = witnetProxy.latestPrice(currencyId);
-        
-        // Check if price feed is ready
-        if (price.status != WitnetResponseStatus.Ready) {
-            revert PriceFeedNotReady();
-        }
+    return int256(price.value);
+  }
 
-        // Convert uint256 to int256, checking for overflow
-        if (price.value > uint256(type(int256).max)) {
-            revert InvalidPrice();
-        }
+  /// @inheritdoc IEACAggregatorProxy
+  function latestTimestamp() external view returns (uint256) {
+    WitnetPrice memory price = witnetProxy.latestPrice(currencyId);
+    return price.timestamp;
+  }
 
-        return int256(price.value);
-    }
+  /// @inheritdoc IEACAggregatorProxy
+  function latestRound() external view returns (uint256) {
+    // Witnet doesn't have the concept of rounds, so we use the timestamp
+    WitnetPrice memory price = witnetProxy.latestPrice(currencyId);
+    return price.timestamp;
+  }
 
-    /// @inheritdoc IEACAggregatorProxy
-    function latestTimestamp() external view returns (uint256) {
-        WitnetPrice memory price = witnetProxy.latestPrice(currencyId);
-        return price.timestamp;
-    }
+  /// @inheritdoc IEACAggregatorProxy
+  function getAnswer(uint256 roundId) external view returns (int256) {
+    // Since Witnet doesn't store historical prices, we can only return the latest
+    // This maintains interface compatibility while gracefully degrading functionality
+    return this.latestAnswer();
+  }
 
-    /// @inheritdoc IEACAggregatorProxy
-    function latestRound() external view returns (uint256) {
-        // Witnet doesn't have the concept of rounds, so we use the timestamp
-        WitnetPrice memory price = witnetProxy.latestPrice(currencyId);
-        return price.timestamp;
-    }
-
-    /// @inheritdoc IEACAggregatorProxy
-    function getAnswer(uint256 roundId) external view returns (int256) {
-        // Since Witnet doesn't store historical prices, we can only return the latest
-        // This maintains interface compatibility while gracefully degrading functionality
-        return this.latestAnswer();
-    }
-
-    /// @inheritdoc IEACAggregatorProxy
-    function getTimestamp(uint256 roundId) external view returns (uint256) {
-        // Since Witnet doesn't store historical prices, we can only return the latest
-        return this.latestTimestamp();
-    }
+  /// @inheritdoc IEACAggregatorProxy
+  function getTimestamp(uint256 roundId) external view returns (uint256) {
+    // Since Witnet doesn't store historical prices, we can only return the latest
+    return this.latestTimestamp();
+  }
 }

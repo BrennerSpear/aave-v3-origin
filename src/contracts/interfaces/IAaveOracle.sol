@@ -18,6 +18,13 @@ interface IAaveOracle is IPriceOracleGetter {
   event BaseCurrencySet(address indexed baseCurrency, uint256 baseCurrencyUnit);
 
   /**
+   * @dev Emitted after the temporary base currency is set
+   * @param baseCurrency The temporary base currency
+   * @param baseCurrencyUnit The unit of the temporary base currency
+   */
+  event TemporaryBaseCurrencySet(address indexed baseCurrency, uint256 baseCurrencyUnit);
+
+  /**
    * @dev Emitted after an asset price source is updated
    * @param asset The address of the asset
    * @param source The address of the source
@@ -81,4 +88,23 @@ interface IAaveOracle is IPriceOracleGetter {
    * @param sources The addresses of the price sources
    */
   function setAssetSources(address[] calldata assets, address[] calldata sources) external;
+
+  /**
+   * @notice Returns the temporary base currency of the oracle
+   * @return Address of the temporary base currency
+   */
+  function temporaryBaseCurrency() external view returns (address);
+
+  /**
+   * @notice Returns the temporary base currency unit
+   * @return The temporary base currency unit
+   */
+  function temporaryBaseCurrencyUnit() external view returns (uint256);
+
+  /**
+   * @notice Sets the temporary base currency and its unit
+   * @param baseCurrency The address of the temporary base currency
+   * @param baseCurrencyUnit The unit of the temporary base currency
+   */
+  function setTemporaryBaseCurrency(address baseCurrency, uint256 baseCurrencyUnit) external;
 }

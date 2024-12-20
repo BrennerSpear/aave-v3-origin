@@ -26,6 +26,8 @@ contract AaveOracle is IAaveOracle {
   IPriceOracleGetter private _fallbackOracle;
   address public immutable override BASE_CURRENCY;
   uint256 public immutable override BASE_CURRENCY_UNIT;
+  address public override temporaryBaseCurrency;
+  uint256 public override temporaryBaseCurrencyUnit;
 
   /**
    * @dev Only asset listing or pool admin can call functions marked by this modifier.
@@ -84,6 +86,24 @@ contract AaveOracle is IAaveOracle {
     emit WitnetProxyUpdated(witnetProxyAddress);
   }
 
+  function setTemporaryBaseCurrency(
+    address baseCurrency,
+    uint256 baseCurrencyUnit
+  ) external onlyAssetListingOrPoolAdmins {
+    _setTemporaryBaseCurrency(baseCurrency, baseCurrencyUnit);
+  }
+
+  /**
+   * @notice Internal function to set the temporary base currency
+   * @param baseCurrency The address of the temporary base currency
+   * @param baseCurrencyUnit The unit of the temporary base currency
+   */
+  function _setTemporaryBaseCurrency(address baseCurrency, uint256 baseCurrencyUnit) internal {
+    temporaryBaseCurrency = baseCurrency;
+    temporaryBaseCurrencyUnit = baseCurrencyUnit;
+    emit TemporaryBaseCurrencySet(baseCurrency, baseCurrencyUnit);
+  }
+
   /**
    * @notice Sets or updates the Witnet currency IDs for given assets
    * @param assets The addresses of the assets to update
@@ -122,12 +142,15 @@ contract AaveOracle is IAaveOracle {
    * @param asset The address of the asset
    * @return The price of the asset from Witnet price router, or fallback oracle if Witnet
    *         price is unavailable or invalid. Returns BASE_CURRENCY_UNIT if asset is BASE_CURRENCY
+   *         or temporaryBaseCurrencyUnit if asset is temporaryBaseCurrency
    */
   function getAssetPrice(address asset) public view override returns (uint256) {
     bytes4 currencyId = assetToCurrencyId[asset];
 
     if (asset == BASE_CURRENCY) {
       return BASE_CURRENCY_UNIT;
+    } else if (asset == temporaryBaseCurrency && temporaryBaseCurrency != address(0)) {
+      return temporaryBaseCurrencyUnit;
     } else if (currencyId == bytes4(0)) {
       return _fallbackOracle.getAssetPrice(asset);
     } else {
@@ -156,6 +179,8 @@ contract AaveOracle is IAaveOracle {
     for (uint256 i = 0; i < assets.length; i++) {
       if (assets[i] == BASE_CURRENCY) {
         prices[i] = BASE_CURRENCY_UNIT;
+      } else if (assets[i] == temporaryBaseCurrency && temporaryBaseCurrency != address(0)) {
+        prices[i] = temporaryBaseCurrencyUnit;
       } else {
         currencyIds[i] = assetToCurrencyId[assets[i]];
       }
@@ -166,7 +191,7 @@ contract AaveOracle is IAaveOracle {
 
     // Process results
     for (uint256 i = 0; i < assets.length; i++) {
-      if (assets[i] != BASE_CURRENCY) {
+      if (assets[i] != BASE_CURRENCY && assets[i] != temporaryBaseCurrency) {
         if (currencyIds[i] == bytes4(0) || witnetPrices[i].value <= 0) {
           // Use fallback if no Witnet price or invalid price
           prices[i] = _fallbackOracle.getAssetPrice(assets[i]);

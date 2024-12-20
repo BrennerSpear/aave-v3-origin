@@ -57,30 +57,31 @@ struct ContractsReport {
 }
 
 struct MarketReport {
-  address poolAddressesProviderRegistry;
   address poolAddressesProvider;
   address poolProxy;
+  address treasury;
+  address uiPoolDataProvider;
+  address aToken;
+  address variableDebtToken;
+  address permit2RouterProxy;
+  address aaveOracle;
+  address poolAddressesProviderRegistry;
   address poolImplementation;
   address poolConfiguratorProxy;
   address poolConfiguratorImplementation;
   address protocolDataProvider;
-  address aaveOracle;
   address defaultInterestRateStrategy;
   address priceOracleSentinel;
   address aclManager;
-  address treasury;
   address proxyAdmin;
   address treasuryImplementation;
   address wrappedTokenGateway;
   address walletBalanceProvider;
   address uiIncentiveDataProvider;
-  address uiPoolDataProvider;
   address paraSwapLiquiditySwapAdapter;
   address paraSwapRepayAdapter;
   address paraSwapWithdrawSwapAdapter;
   address l2Encoder;
-  address aToken;
-  address variableDebtToken;
   address emissionManager;
   address rewardsControllerImplementation;
   address rewardsControllerProxy;
@@ -90,7 +91,6 @@ struct MarketReport {
   address staticATokenFactoryProxy;
   address staticATokenImplementation;
   address revenueSplitter;
-  address permit2RouterProxy;
   address permit2RouterImplementation;
 }
 
