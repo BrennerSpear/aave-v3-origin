@@ -17,7 +17,7 @@ contract AaveV3OracleProcedure {
         emptyArray,
         emptyArray,
         address(0),
-        address(0),  // Use 0x0 for USD base currency
+        address(0), // Use 0x0 for USD base currency
         10 ** oracleDecimals
       )
     );

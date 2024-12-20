@@ -2,8 +2,8 @@
 pragma solidity ^0.8.10;
 
 import {IPool} from '../../interfaces/IPool.sol';
-import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {SafeTransferLib} from '../../../../lib/permit2/lib/solmate/src/utils/SafeTransferLib.sol';
+import {ERC20} from '../../../../lib/permit2/lib/solmate/src/tokens/ERC20.sol';
 import {VersionedInitializable} from '../../misc/aave-upgradeability/VersionedInitializable.sol';
 import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
@@ -15,8 +15,6 @@ import {ISignatureTransfer} from 'permit2/interfaces/ISignatureTransfer.sol';
  * @notice Router contract to handle Permit2 operations for the Aave Pool
  */
 contract AavePermit2Router is VersionedInitializable {
-  using SafeERC20 for IERC20;
-
   // Uniswap's Permit2 contract address - same on all chains
   ISignatureTransfer public constant PERMIT2 =
     ISignatureTransfer(0x000000000022D473030F116dDEE9F6B43aC78BA3);
@@ -76,7 +74,7 @@ contract AavePermit2Router is VersionedInitializable {
     );
 
     // Approve the Pool to spend the tokens
-    IERC20(asset).forceApprove(address(ADDRESSES_PROVIDER.getPool()), amount);
+    SafeTransferLib.safeApprove(ERC20(asset), address(ADDRESSES_PROVIDER.getPool()), amount);
 
     // Supply the tokens to the Pool
     IPool(ADDRESSES_PROVIDER.getPool()).supply(asset, amount, onBehalfOf, referralCode);
@@ -114,7 +112,7 @@ contract AavePermit2Router is VersionedInitializable {
     );
 
     // Approve the Pool to spend the tokens
-    IERC20(asset).forceApprove(address(ADDRESSES_PROVIDER.getPool()), amount);
+    SafeTransferLib.safeApprove(ERC20(asset), address(ADDRESSES_PROVIDER.getPool()), amount);
 
     // Repay the tokens to the Pool
     return IPool(ADDRESSES_PROVIDER.getPool()).repay(asset, amount, interestRateMode, onBehalfOf);

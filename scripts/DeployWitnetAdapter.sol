@@ -10,7 +10,7 @@ contract Deploy is Script {
         console2.log('Deploying Witnet Price Adapter');
         console2.log('sender', msg.sender);
 
-        // World Sepolia Witnet proxy
+        // Witnet proxy address on all chains
         address witnetProxy = 0x1111AbA2164AcdC6D291b08DfB374280035E1111;
         // ETH/USD currency ID
         bytes4 currencyId = 0x3d15f701;
